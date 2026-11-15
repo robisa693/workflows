@@ -1,8 +1,6 @@
 name: Check SVT Valet 2026 Live Blog
 
 on:
-  schedule:
-    - cron: "*/10 * * * *"
   workflow_dispatch:
     inputs:
       test_send:

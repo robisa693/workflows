@@ -5,7 +5,8 @@ I find interesting and send an alert to Discord when something changes.
 
 Each workflow is a small, dependency-free Python script plus a workflow file:
 
-1. The workflow runs on a schedule (or manually from the Actions tab).
+1. An external scheduler ([cron-job.org](https://cron-job.org)) starts the workflow
+   through GitHub's API, or you run it manually from the Actions tab.
 2. The script fetches its source and compares it with what it saw last time.
 3. Anything new is posted to a Discord channel through a webhook.
 4. The updated state is committed back to the repo as a small JSON file, so the
@@ -17,7 +18,7 @@ The first run of each workflow only records a baseline and sends no alerts.
 
 | Workflow | Watches | Schedule | Discord secret |
 |---|---|---|---|
-| [Plugin Hub installs](#plugin-hub-install-count-monitor) | Install counts of my RuneLite plugins | Fridays 13:00 (Stockholm) | `DISCORD_WEBHOOK_URL` |
+| [Plugin Hub installs](#plugin-hub-install-count-monitor) | Install counts of my RuneLite plugins | Fridays 17:30 (Stockholm) | `DISCORD_WEBHOOK_URL` |
 | [SVT Valet 2026](#svt-valet-2026-live-blog-monitor) | SVT's live blog on Swedish politics | Every 10 minutes | `DISCORD_WEBHOOK_URL_SVT` |
 
 ## Setup
@@ -29,15 +30,24 @@ The first run of each workflow only records a baseline and sends no alerts.
    If a secret is missing, alerts are only printed to the workflow log.
 3. **Run the workflow once manually** (Actions → pick the workflow → Run
    workflow) to record the baseline.
+4. **Schedule it on cron-job.org.** The workflows have no GitHub `schedule`
+   trigger, because GitHub often starts scheduled runs hours late or skips them.
+   Instead, a cron-job.org job sends this request on the schedule in the table:
+   - `POST https://api.github.com/repos/robisa693/workflows/actions/workflows/<workflow file>/dispatches`
+   - Headers: `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`,
+     `X-GitHub-Api-Version: 2022-11-28`, `Content-Type: application/json`,
+     `User-Agent: <any name>`
+   - Body: `{"ref":"main"}`
 
-GitHub often starts scheduled workflows late, sometimes by several hours, and
-can skip runs when it is busy. That is normal and doesn't indicate a problem.
+   The token is a fine-grained GitHub token limited to this repo with only
+   **Actions: Read and write**. GitHub answers `204` on success. When the token
+   expires, create a new one and update the `Authorization` header in each job.
 
 ## Adding a new workflow
 
 Copy an existing pair (`check_*.py` + `.github/workflows/check-*.yml`), give it
-its own state file and its own `DISCORD_WEBHOOK_URL_*` secret, and add a row to
-the table above. Workflows that commit state share the `state-commit`
+its own state file and its own `DISCORD_WEBHOOK_URL_*` secret, add a cron-job.org
+job for it, and add a row to the table above. Workflows that commit state share the `state-commit`
 concurrency group and run `git pull --rebase` before pushing, so they don't
 collide.
 

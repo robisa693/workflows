@@ -1,13 +1,14 @@
 name: Check Plugin Hub Installs
 
 on:
-  schedule:
-    - cron: "0 13 * * 5"
-      timezone: "Europe/Stockholm"
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: state-commit
+  cancel-in-progress: false
 
 jobs:
   check:
@@ -34,6 +35,7 @@ jobs:
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add installs_state.json
             git commit -m "Update install count state"
+            git pull --rebase
             git push
           else
             echo "No state changes to commit."
