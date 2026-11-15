@@ -19,7 +19,7 @@ The first run of each workflow only records a baseline and sends no alerts.
 | Workflow | Watches | Schedule | Discord secret |
 |---|---|---|---|
 | [Plugin Hub installs](#plugin-hub-install-count-monitor) | Install counts of my RuneLite plugins | Fridays 17:30 (Stockholm) | `DISCORD_WEBHOOK_URL` |
-| [SVT Valet 2026](#svt-valet-2026-live-blog-monitor) | SVT's live blog on Swedish politics | Every 10 minutes | `DISCORD_WEBHOOK_URL_SVT` |
+| [SVT Valet 2026](#svt-valet-2026-live-blog-monitor) | SVT's live blog on Swedish politics | Every 30 minutes | `DISCORD_WEBHOOK_URL_SVT` |
 
 ## Setup
 
