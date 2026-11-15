@@ -1,0 +1,40 @@
+name: Check Plugin Hub Installs
+
+on:
+  schedule:
+    - cron: "0 13 * * 5"
+      timezone: "Europe/Stockholm"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Run install count check
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python check_installs.py
+
+      - name: Commit updated state if changed
+        if: ${{ !cancelled() }}
+        run: |
+          if ! git diff --quiet installs_state.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add installs_state.json
+            git commit -m "Update install count state"
+            git push
+          else
+            echo "No state changes to commit."
+          fi

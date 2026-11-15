@@ -1,0 +1,49 @@
+name: Check SVT Valet 2026 Live Blog
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      test_send:
+        description: "Send the latest post to Discord now (doesn't change state)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: state-commit
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Check for new posts
+        env:
+          DISCORD_WEBHOOK_URL_SVT: ${{ secrets.DISCORD_WEBHOOK_URL_SVT }}
+          TEST_SEND: ${{ inputs.test_send }}
+        run: python check_svt_val.py
+
+      - name: Commit updated state if changed
+        if: ${{ !cancelled() }}
+        run: |
+          git add svt_val_state.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update SVT live blog state"
+            git pull --rebase
+            git push
+          else
+            echo "No state changes to commit."
+          fi
